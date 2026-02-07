@@ -1,16 +1,4 @@
 // ===== CONSTANTS =====
-const CONSTANTS = {
-    STORAGE_KEYS: {
-        WORD_LIST: 'ss_wordlist',
-        USER_NAME: 'ss_username',
-        TOTAL_STARS: 'engTotalStars',
-        RANDOM: 'ss_random',
-        DIFFICULTY: 'ss_difficulty',
-        CHALLENGE_TIMER: 'ss_ch_timer',
-        HIGH_SCORE: 'ss_ch_high'
-    }
-};
-
 const QUOTES = [
     "Mistakes are proof that you are trying! 🌟",
     "Every small step leads to a giant leap! 🚀",
@@ -45,102 +33,88 @@ const DEFAULT_WORDS = [
     { word: 'banana', img: 'https://img.freepik.com/free-vector/vector-ripe-yellow-banana-bunch-isolated-white-background_1284-45456.jpg?semt=ais_hybrid&w=400', count: 0, active: true }
 ];
 
-// ===== STATE MANAGER =====
-const StateManager = {
-    get(key, defaultVal) {
-        try {
-            const item = localStorage.getItem(key);
-            return item !== null ? item : defaultVal;
-        } catch (e) {
-            return defaultVal;
-        }
-    },
-    
-    getJSON(key, defaultVal) {
-        try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultVal;
-        } catch (e) {
-            return defaultVal;
-        }
-    },
-    
-    set(key, val) {
-        try {
-            localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : val);
-        } catch (e) {
-            console.warn('Storage failed:', e);
-        }
-    },
-    
-    getWordList() {
-        return this.getJSON(CONSTANTS.STORAGE_KEYS.WORD_LIST, DEFAULT_WORDS);
-    },
-    
-    getUserName() {
-        return this.get(CONSTANTS.STORAGE_KEYS.USER_NAME, 'Student');
-    },
-    
-    getTotalStars() {
-        return parseInt(this.get(CONSTANTS.STORAGE_KEYS.TOTAL_STARS, '0'));
+// ===== STATE =====
+function getStorage(key, defaultVal) {
+    try {
+        const item = localStorage.getItem(key);
+        return item !== null ? item : defaultVal;
+    } catch (e) {
+        return defaultVal;
     }
-};
+}
+
+function getJSON(key, defaultVal) {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultVal;
+    } catch (e) {
+        return defaultVal;
+    }
+}
+
+function setStorage(key, val) {
+    try {
+        localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : val);
+    } catch (e) {}
+}
+
+function getWordList() {
+    return getJSON('ss_wordlist', DEFAULT_WORDS);
+}
+
+function getUserName() {
+    return getStorage('ss_username', 'Student');
+}
+
+function getTotalStars() {
+    return parseInt(getStorage('engTotalStars', '0'));
+}
 
 // ===== AUDIO =====
-const AudioManager = {
-    speak(text) {
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.rate = 0.85;
-        u.lang = 'en-US';
-        window.speechSynthesis.speak(u);
-    },
-    
-    async spellOut(word) {
-        this.speak(word);
-        await this.delay(1000);
-        for (let char of word) {
-            if (char !== ' ') {
-                this.speak(char);
-                await this.delay(400);
-            }
-        }
-        await this.delay(300);
-        this.speak(word);
-    },
-    
-    delay(ms) {
-        return new Promise(r => setTimeout(r, ms));
-    }
-};
+function speak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85;
+    u.lang = 'en-US';
+    window.speechSynthesis.speak(u);
+}
 
-// ===== SCREEN MANAGEMENT =====
+async function spellOut(word) {
+    speak(word);
+    await delay(1000);
+    for (let char of word) {
+        if (char !== ' ') {
+            speak(char);
+            await delay(400);
+        }
+    }
+    await delay(300);
+    speak(word);
+}
+
+function delay(ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+
+// ===== NAVIGATION =====
 let currentScreen = 'home';
 let learnIndex = 0;
 
 function showScreen(screenId) {
-    // Hide all screens
-    document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active');
-        s.style.display = 'none';
-    });
-    
-    // Update nav
+    // Hide all
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
-    // Show new screen
+    // Show new
     const screen = document.getElementById(screenId);
     if (screen) {
         screen.classList.add('active');
-        screen.style.display = 'flex';
         currentScreen = screenId;
         
-        // Update nav button
         const navBtn = document.querySelector(`button[onclick="showScreen('${screenId}')"]`);
         if (navBtn) navBtn.classList.add('active');
         
-        // Render screen content
         if (screenId === 'home') renderHome();
         else if (screenId === 'learn') renderLearn();
         else if (screenId === 'spell') renderSpell();
@@ -148,59 +122,56 @@ function showScreen(screenId) {
         else if (screenId === 'challenge') renderChallenge();
         else if (screenId === 'library') renderLibrary();
     }
+    
+    window.scrollTo(0, 0);
 }
 
-// ===== RENDER FUNCTIONS =====
-
+// ===== RENDER =====
 function renderHome() {
     const container = document.getElementById('home');
-    const userName = StateManager.getUserName();
-    const totalStars = StateManager.getTotalStars();
+    const userName = getUserName();
+    const totalStars = getTotalStars();
     const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
     
     container.innerHTML = `
-        <h2 style="color: #FF6B6B; font-family: cursive; font-size: 32px;">Hi ${userName}! 👋</h2>
+        <h2 style="color: #FF6B6B; font-family: cursive; font-size: 32px; margin-bottom: 10px;">Hi ${userName}! 👋</h2>
         
-        <div onclick="AudioManager.speak('${quote.replace(/'/g, "\\'")}')" 
-             style="background: white; padding: 20px; border-radius: 20px; border: 2px dashed #4ECDC4; margin: 15px; cursor: pointer; max-width: 400px;">
-            <p style="font-family: cursive; color: #555; font-size: 18px; margin: 0;">${quote}</p>
-            <small style="color: #aaa;">(Tap to listen)</small>
+        <div class="quote-card" onclick="speak('${quote.replace(/'/g, "\\'")}')">
+            <p>${quote}</p>
+            <small>(Tap to listen)</small>
         </div>
         
-        <div style="color: #45aaf2; font-size: 20px; margin: 10px;">🌟 ${totalStars} Mastery Stars</div>
+        <div class="stars-display">🌟 ${totalStars} Mastery Stars</div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; margin-top: 20px;">
-            <button onclick="showScreen('learn')" style="background: #4ECDC4; color: white; border: none; padding: 20px; border-radius: 15px; font-size: 18px; cursor: pointer;">📖 LEARN</button>
-            <button onclick="showScreen('spell')" style="background: #45aaf2; color: white; border: none; padding: 20px; border-radius: 15px; font-size: 18px; cursor: pointer;">✏️ SPELL</button>
-            <button onclick="showScreen('match')" style="background: #a55eea; color: white; border: none; padding: 20px; border-radius: 15px; font-size: 18px; cursor: pointer;">🧩 MATCH</button>
-            <button onclick="showScreen('challenge')" style="background: #eb4d4b; color: white; border: none; padding: 20px; border-radius: 15px; font-size: 18px; cursor: pointer;">🔥 CHALLENGE</button>
-            <button onclick="showScreen('library')" style="background: #FF6B6B; color: white; border: none; padding: 20px; border-radius: 15px; font-size: 18px; cursor: pointer; grid-column: span 2;">📚 LIBRARY</button>
+        <div class="button-grid">
+            <button class="btn btn-learn" onclick="showScreen('learn')">📖 LEARN</button>
+            <button class="btn btn-spell" onclick="showScreen('spell')">✏️ SPELL</button>
+            <button class="btn btn-match" onclick="showScreen('match')">🧩 MATCH</button>
+            <button class="btn btn-challenge" onclick="showScreen('challenge')">🔥 CHALLENGE</button>
+            <button class="btn btn-library" onclick="showScreen('library')">📚 LIBRARY</button>
         </div>
     `;
 }
 
 function renderLearn() {
     const container = document.getElementById('learn');
-    const words = StateManager.getWordList().filter(w => w.active);
+    const words = getWordList().filter(w => w.active);
     
     if (!words.length) {
-        container.innerHTML = '<p>No words available. Add words in settings.</p>';
+        container.innerHTML = '<p class="coming-soon">No words available.</p>';
         return;
     }
     
-    learnIndex = learnIndex % words.length;
+    learnIndex = ((learnIndex % words.length) + words.length) % words.length;
     const word = words[learnIndex];
     
     container.innerHTML = `
-        <p style="color: #555; font-size: 20px;">Tap word to hear spelling!</p>
-        <img src="${word.img}" style="width: 300px; max-width: 90%; height: 200px; object-fit: contain; border-radius: 20px; border: 5px solid #4ECDC4; background: white;">
-        <div onclick="AudioManager.spellOut('${word.word}')" 
-             style="font-size: 48px; color: #FF6B6B; font-weight: bold; margin: 20px; cursor: pointer; text-transform: lowercase; font-family: 'Comic Neue', cursive;">
-            ${word.word}
-        </div>
-        <div style="display: flex; gap: 15px; width: 90%; max-width: 400px;">
-            <button onclick="prevLearn()" style="flex: 1; padding: 15px; background: #FFE66D; border: none; border-radius: 10px; cursor: pointer;">⬅️ BACK</button>
-            <button onclick="nextLearn()" style="flex: 1; padding: 15px; background: #4ECDC4; color: white; border: none; border-radius: 10px; cursor: pointer;">NEXT ➡️</button>
+        <p style="color: #555; font-size: 18px; margin-bottom: 10px;">Tap word to hear spelling!</p>
+        <img src="${word.img}" class="word-image" alt="${word.word}">
+        <div class="word-text" onclick="spellOut('${word.word}')">${word.word}</div>
+        <div class="nav-buttons">
+            <button class="nav-btn btn-back" onclick="prevLearn()">⬅️ BACK</button>
+            <button class="nav-btn btn-next" onclick="nextLearn()">NEXT ➡️</button>
         </div>
     `;
 }
@@ -217,41 +188,37 @@ function prevLearn() {
 }
 
 function renderSpell() {
-    const container = document.getElementById('spell');
-    container.innerHTML = `
-        <p style="color: #555; font-size: 20px;">Spell mode coming soon!</p>
-        <button onclick="showScreen('home')" style="padding: 15px 30px; background: #4ECDC4; color: white; border: none; border-radius: 10px; cursor: pointer;">Back to Home</button>
+    document.getElementById('spell').innerHTML = `
+        <p class="coming-soon">Spell mode coming soon!</p>
+        <button class="home-btn" onclick="showScreen('home')">Back to Home</button>
     `;
 }
 
 function renderMatch() {
-    const container = document.getElementById('match');
-    container.innerHTML = `
-        <p style="color: #555; font-size: 20px;">Match mode coming soon!</p>
-        <button onclick="showScreen('home')" style="padding: 15px 30px; background: #4ECDC4; color: white; border: none; border-radius: 10px; cursor: pointer;">Back to Home</button>
+    document.getElementById('match').innerHTML = `
+        <p class="coming-soon">Match mode coming soon!</p>
+        <button class="home-btn" onclick="showScreen('home')">Back to Home</button>
     `;
 }
 
 function renderChallenge() {
-    const container = document.getElementById('challenge');
-    container.innerHTML = `
-        <p style="color: #555; font-size: 20px;">Challenge mode coming soon!</p>
-        <button onclick="showScreen('home')" style="padding: 15px 30px; background: #4ECDC4; color: white; border: none; border-radius: 10px; cursor: pointer;">Back to Home</button>
+    document.getElementById('challenge').innerHTML = `
+        <p class="coming-soon">Challenge mode coming soon!</p>
+        <button class="home-btn" onclick="showScreen('home')">Back to Home</button>
     `;
 }
 
 function renderLibrary() {
     const container = document.getElementById('library');
-    const words = StateManager.getWordList().filter(w => w.active);
+    const words = getWordList().filter(w => w.active);
     
-    let html = '<p style="color: #555;">Tap word to hear it!</p><div style="width: 90%; max-width: 500px;">';
+    let html = '<p style="color: #555; margin-bottom: 10px;">Tap word to hear it!</p><div class="library-list">';
     
     words.forEach(w => {
         html += `
-            <div onclick="AudioManager.speak('${w.word}')" 
-                 style="background: white; padding: 15px; margin: 10px 0; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 2px solid #e0e0e0;">
-                <span style="font-size: 24px; text-transform: lowercase; font-weight: bold; color: #555;">${w.word}</span>
-                <span style="color: #f1c40f;">🌟 ${w.count}</span>
+            <div class="library-item" onclick="speak('${w.word}')">
+                <span>${w.word}</span>
+                <span>🌟 ${w.count}</span>
             </div>
         `;
     });
@@ -260,7 +227,7 @@ function renderLibrary() {
     container.innerHTML = html;
 }
 
-// ===== START APP =====
+// ===== START =====
 document.addEventListener('DOMContentLoaded', function() {
     showScreen('home');
 });
