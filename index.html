@@ -5,51 +5,253 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Small Steps Spelling</title>
     <link rel="stylesheet" href="./css/variables.css">
-    <link rel="stylesheet" href="./css/base.css">
-    <link rel="stylesheet" href="./css/components.css">
     <style>
-        /* Inline critical styles */
-        .screen { display: none; }
-        .screen.active { display: flex; flex-direction: column; align-items: center; }
-        .nav-bar { 
-            position: fixed; bottom: 0; width: 100%; 
-            display: flex; justify-content: space-around; 
-            background: white; padding: 15px 0;
+        /* Header */
+        .header {
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            background: var(--bg);
+        }
+        
+        .header h1 {
+            color: var(--primary);
+            font-size: 28px;
+            margin: 0;
+        }
+        
+        /* Main container - centers everything */
+        .main-container {
+            flex: 1;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for nav bar */
+            margin: 0 auto;
+        }
+        
+        /* Screens */
+        .screen {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        /* Quote card */
+        .quote-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px dashed var(--secondary);
+            margin: 15px 0;
+            width: 100%;
+            max-width: 400px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .quote-card p {
+            color: #555;
+            font-size: 18px;
+            margin: 0;
+        }
+        
+        .quote-card small {
+            color: #aaa;
+            font-size: 12px;
+        }
+        
+        /* Stars */
+        .stars-display {
+            color: var(--blue);
+            font-size: 20px;
+            margin: 10px;
+        }
+        
+        /* Button grid */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-learn { background: var(--secondary); }
+        .btn-spell { background: var(--blue); }
+        .btn-match { background: var(--purple); }
+        .btn-challenge { background: var(--challenge); }
+        .btn-library { background: var(--primary); grid-column: span 2; }
+        
+        /* Learn screen */
+        .word-image {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 20px;
+            border: 5px solid var(--secondary);
+            background: white;
+            margin: 20px 0;
+        }
+        
+        .word-text {
+            font-size: 48px;
+            color: var(--primary);
+            font-weight: bold;
+            margin: 20px;
+            cursor: pointer;
+            text-transform: lowercase;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-back { background: var(--accent); }
+        .btn-next { background: var(--secondary); color: white; }
+        
+        /* Library */
+        .library-list {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+        }
+        
+        .library-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .library-item span:first-child {
+            font-size: 24px;
+            text-transform: lowercase;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .library-item span:last-child {
+            color: #f1c40f;
+        }
+        
+        /* Navigation bar */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
         }
-        .nav-item { 
-            background: none; border: none; 
-            font-family: 'Klee One', cursive;
-            cursor: pointer; padding: 10px;
+        
+        .nav-item {
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 10px;
+            color: #888;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .nav-item.active { color: #FF6B6B; }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        /* Utility */
+        .coming-soon {
+            color: #555;
+            font-size: 20px;
+            margin: 40px 0;
+        }
+        
+        .home-btn {
+            padding: 15px 30px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
-    <div class="header" style="padding: 15px; text-align: center;">
-        <h1 style="color: #FF6B6B; margin: 0;">Small Steps Spelling ✨</h1>
+    <!-- Header -->
+    <div class="header">
+        <h1>Small Steps Spelling ✨</h1>
     </div>
 
-    <!-- Screens -->
-    <div id="home" class="screen active"></div>
-    <div id="learn" class="screen"></div>
-    <div id="spell" class="screen"></div>
-    <div id="match" class="screen"></div>
-    <div id="challenge" class="screen"></div>
-    <div id="library" class="screen"></div>
-    <div id="admin" class="screen"></div>
+    <!-- Main Content - Centered -->
+    <div class="main-container">
+        <div id="home" class="screen active"></div>
+        <div id="learn" class="screen"></div>
+        <div id="spell" class="screen"></div>
+        <div id="match" class="screen"></div>
+        <div id="challenge" class="screen"></div>
+        <div id="library" class="screen"></div>
+    </div>
 
     <!-- Navigation -->
     <nav class="nav-bar">
-        <button class="nav-item active" onclick="showScreen('home')">🏠 Home</button>
-        <button class="nav-item" onclick="showScreen('learn')">📖 Learn</button>
-        <button class="nav-item" onclick="showScreen('spell')">✏️ Spell</button>
-        <button class="nav-item" onclick="showScreen('match')">🧩 Match</button>
-        <button class="nav-item" onclick="showScreen('challenge')">🔥 Chall.</button>
-        <button class="nav-item" onclick="showScreen('library')">📚 Lib</button>
+        <button class="nav-item active" onclick="showScreen('home')">🏠<br>Home</button>
+        <button class="nav-item" onclick="showScreen('learn')">📖<br>Learn</button>
+        <button class="nav-item" onclick="showScreen('spell')">✏️<br>Spell</button>
+        <button class="nav-item" onclick="showScreen('match')">🧩<br>Match</button>
+        <button class="nav-item" onclick="showScreen('challenge')">🔥<br>Chall.</button>
+        <button class="nav-item" onclick="showScreen('library')">📚<br>Lib</button>
     </nav>
 
-    <!-- Load as regular script, not module -->
     <script src="./js/app.js"></script>
 </body>
 </html>
