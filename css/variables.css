@@ -1,78 +1,24 @@
 :root {
-    /* Primary Colors */
     --primary: #FF6B6B;
-    --primary-dark: #ee5a5a;
     --secondary: #4ECDC4;
-    --secondary-dark: #3dbdb5;
     --accent: #FFE66D;
-    --accent-dark: #f0d55e;
-    
-    /* Functional Colors */
     --blue: #45aaf2;
-    --blue-dark: #3498db;
     --purple: #a55eea;
-    --purple-dark: #8854d0;
-    --success: #2ecc71;
-    --success-dark: #27ae60;
-    --warning: #ff9f43;
     --challenge: #eb4d4b;
-    
-    /* Neutrals */
     --bg: #F7FFF7;
-    --surface: #ffffff;
-    --text: #555555;
-    --text-light: #777777;
-    --border: #e0e0e0;
-    --shadow: #d4e5d4;
-    
-    /* Typography */
-    --font-display: 'Klee One', cursive;
-    --font-body: 'Comic Neue', cursive;
-    --font-ui: 'Segoe UI', system-ui, sans-serif;
-    
-    /* Spacing */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
-    
-    /* Border Radius */
-    --radius-sm: 10px;
-    --radius-md: 20px;
-    --radius-lg: 25px;
-    --radius-xl: 35px;
-    
-    /* Shadows */
-    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 0 var(--shadow);
-    
-    /* Transitions */
-    --transition-fast: 0.15s ease;
-    --transition-base: 0.3s ease;
-    
-    /* Touch targets */
-    --touch-target: 44px;
+    --text: #555;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #1a1a2e;
-        --surface: #16213e;
-        --text: #eaeaea;
-        --text-light: #a0a0a0;
-        --border: #0f3460;
-        --shadow: #0f3460;
-    }
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* High contrast mode */
-.high-contrast {
-    --primary: #000000;
-    --secondary: #000000;
-    --bg: #ffffff;
-    --text: #000000;
-    --accent: #ffff00;
+* {
+    box-sizing: border-box;
 }
