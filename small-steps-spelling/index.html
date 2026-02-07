@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Interactive spelling app for young learners">
+    <meta name="theme-color" content="#FF6B6B">
+    
+    <title>Small Steps Spelling ✨</title>
+    
+    <!-- Preload critical fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/screens.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Confetti (external) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Small Steps Spelling ✨</h1>
+        <div class="header-controls">
+            <button class="admin-toggle-btn" onclick="app.navigateTo('admin')" aria-label="Parent Settings">
+                ⚙️ PARENT
+            </button>
+            <button class="fullscreen-btn" onclick="app.toggleFullscreen()" aria-label="Toggle Fullscreen">
+                🖥️
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Screens will be populated by JavaScript -->
+        <div id="home" class="screen"></div>
+        <div id="learn" class="screen"></div>
+        <div id="spell" class="screen"></div>
+        <div id="match" class="screen"></div>
+        <div id="challenge" class="screen"></div>
+        <div id="library" class="screen"></div>
+        <div id="admin" class="screen"></div>
+        
+        <!-- Results Overlay -->
+        <div id="ch-results" class="overlay" style="display: none;">
+            <div class="overlay-content">
+                <h1>Time's Up! 🏁</h1>
+                <div class="summary-card">
+                    <div class="stat-line">
+                        <span>Final Score:</span>
+                        <strong id="res-score" class="highlight-challenge">0</strong>
+                    </div>
+                    <hr>
+                    <div class="stat-line">
+                        <span>✅ Correct Words:</span>
+                        <strong id="res-correct" class="highlight-success">0</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>❌ Mistakes Made:</span>
+                        <strong id="res-wrong" class="highlight-primary">0</strong>
+                    </div>
+                    <h3>Practice These Words:</h3>
+                    <div id="res-practice-list"></div>
+                    <button class="action-btn" onclick="app.navigateTo('home')">
+                        BACK TO HOME
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Library Popup -->
+        <div id="lib-popup" class="popup" style="display: none;">
+            <div class="popup-content">
+                <button class="popup-close" onclick="app.closePopup()" aria-label="Close">×</button>
+                <img id="popup-img" alt="Word image">
+                <h2 id="popup-text"></h2>
+                <button id="replay-voice" class="action-btn" onclick="app.replayPopupAudio()">
+                    🔊 REPLAY
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation -->
+    <nav class="nav-bar" role="navigation" aria-label="Main navigation">
+        <button class="nav-item" id="nav-home" aria-label="Home">
+            <span aria-hidden="true">🏠</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" id="nav-learn" aria-label="Learn">
+            <span aria-hidden="true">📖</span>
+            <span>Learn</span>
+        </button>
+        <button class="nav-item" id="nav-spell" aria-label="Spell">
+            <span aria-hidden="true">✏️</span>
+            <span>Spell</span>
+        </button>
+        <button class="nav-item" id="nav-match" aria-label="Match">
+            <span aria-hidden="true">🧩</span>
+            <span>Match</span>
+        </button>
+        <button class="nav-item" id="nav-challenge" aria-label="Challenge">
+            <span aria-hidden="true">🔥</span>
+            <span>Chall.</span>
+        </button>
+        <button class="nav-item" id="nav-lib" aria-label="Library">
+            <span aria-hidden="true">📚</span>
+            <span>Lib</span>
+        </button>
+    </nav>
+
+    <!-- Main App Module -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
