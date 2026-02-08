@@ -202,38 +202,64 @@ function toggleFullscreen() {
     }
 }
 
-// ===== SPEECH =====
+// ===== SPEECH - FIXED =====
+let speechQueue = [];
+let isSpeaking = false;
+
+async function processSpeechQueue() {
+    if (isSpeaking || speechQueue.length === 0) return;
+    
+    isSpeaking = true;
+    const text = speechQueue.shift();
+    
+    return new Promise((resolve) => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        u.lang = 'en-US';
+        u.onend = () => {
+            isSpeaking = false;
+            resolve();
+            processSpeechQueue(); // Process next in queue
+        };
+        u.onerror = () => {
+            isSpeaking = false;
+            resolve();
+            processSpeechQueue();
+        };
+        window.speechSynthesis.speak(u);
+    });
+}
+
 function speak(text) {
     if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.85;
-    u.lang = 'en-US';
-    window.speechSynthesis.speak(u);
+    speechQueue.push(text);
+    processSpeechQueue();
 }
 
 async function spellOut(word) {
-    if (!window.speechSynthesis) return;
-    
+    // Clear any pending speech
+    speechQueue = [];
     window.speechSynthesis.cancel();
+    await delay(100);
+    
+    // Queue all parts
     const cleanWord = word.toLowerCase().trim();
     
-    // Say full word and WAIT for it
-    await speakAndWait(cleanWord);
-    await delay(1000);
+    // Say full word
+    speak(cleanWord);
+    await delay(1200);
     
-    // Say each letter and WAIT for each
+    // Spell each letter with longer pauses
     for (let char of cleanWord) {
         if (char !== ' ') {
-            await speakAndWait(char);
-            await delay(600);
+            speak(char);
+            await delay(700); // Longer pause between letters
         }
     }
     
-    await delay(400);
-    await speakAndWait(cleanWord);
+    await delay(500);
+    speak(cleanWord);
 }
-
 function speakAndWait(text) {
     return new Promise((resolve) => {
         const u = new SpeechSynthesisUtterance(text);
