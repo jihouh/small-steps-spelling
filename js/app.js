@@ -238,11 +238,11 @@ async function spellOut(word) {
     for (let char of cleanWord) {
         if (char !== ' ') {
             await speakAndWait(char);
-            await delay(500);
+            await delay(450);
         }
     }
     
-    await delay(400);
+    await delay(350);
     await speakAndWait(cleanWord);
 }
 
@@ -996,4 +996,5 @@ function resetAll() {
 document.addEventListener('DOMContentLoaded', function() {
     showScreen('home');
 });
+
 
