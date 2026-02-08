@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Small Steps Spelling</title>
     <link rel="stylesheet" href="./css/variables.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -25,373 +26,41 @@
         .header {
             width: 100%;
             text-align: center;
-            padding: 20px;
+            padding: 15px 20px;
             background: #F7FFF7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 600px;
         }
         
         .header h1 {
             color: #FF6B6B;
-            font-size: 28px;
+            font-size: 24px;
             margin: 0;
-        }
-        
-        /* Main container */
-        .main-container {
             flex: 1;
-            width: 100%;
-            max-width: 600px;
+        }
+        
+        .header-icons {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            padding-bottom: 100px;
-            margin: 0 auto;
-        }
-        
-        /* Screens */
-        .screen {
-            display: none;
-            width: 100%;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        
-        .screen.active {
-            display: flex;
-        }
-        
-        /* Quote card */
-        .quote-card {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            border: 2px dashed #4ECDC4;
-            margin: 15px 0;
-            width: 100%;
-            max-width: 400px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .quote-card p {
-            color: #555;
-            font-size: 18px;
-            margin: 0;
-        }
-        
-        .quote-card small {
-            color: #aaa;
-        }
-        
-        .stars-display {
-            color: #45aaf2;
-            font-size: 20px;
-            margin: 10px;
-        }
-        
-        /* Button grid */
-        .button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            padding: 20px;
-            border: none;
-            border-radius: 15px;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        .btn:hover { transform: scale(1.05); }
-        .btn-learn { background: #4ECDC4; }
-        .btn-spell { background: #45aaf2; }
-        .btn-match { background: #a55eea; }
-        .btn-challenge { background: #eb4d4b; }
-        .btn-library { background: #FF6B6B; grid-column: span 2; }
-        .btn-admin { background: #666; grid-column: span 2; }
-        
-        /* Learn screen */
-        .word-image {
-            width: 100%;
-            max-width: 300px;
-            height: 200px;
-            object-fit: contain;
-            border-radius: 20px;
-            border: 5px solid #4ECDC4;
-            background: white;
-            margin: 20px 0;
-        }
-        
-        .word-text {
-            font-size: 48px;
-            color: #FF6B6B;
-            font-weight: bold;
-            margin: 20px;
-            cursor: pointer;
-            text-transform: lowercase;
-        }
-        
-        .nav-buttons {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-        }
-        
-        .nav-btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .btn-back { background: #FFE66D; }
-        .btn-next { background: #4ECDC4; color: white; }
-        
-        /* Spell mode */
-        .spell-slots {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .spell-slot {
-            width: 50px;
-            height: 60px;
-            border-bottom: 4px solid #4ECDC4;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            font-weight: bold;
-            color: #FF6B6B;
-            background: white;
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .spell-slot.filled {
-            color: #aaa;
-            border-bottom-color: #ddd;
-            background: #f5f5f5;
-        }
-        
-        .spell-slot.has-letter {
-            background: #e8f8f5;
-            border-bottom-color: #2ecc71;
-        }
-        
-        .letter-pool {
-            display: flex;
-            justify-content: center;
             gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            max-width: 400px;
         }
         
-        .letter-btn {
-            width: 55px;
-            height: 55px;
-            background: #45aaf2;
+        .icon-btn {
+            background: #eee;
             border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #2980b9;
-        }
-        
-        .letter-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #2980b9;
-        }
-        
-        /* Match mode */
-        .match-btn {
-            width: 100%;
-            max-width: 350px;
-            background: white;
-            font-size: 22px;
-            padding: 15px;
-            border-radius: 18px;
-            border: 3px solid #FFE66D;
-            box-shadow: 0 5px 0 #FFE66D;
-            margin: 10px 0;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: lowercase;
-        }
-        
-        .match-btn:hover {
-            transform: translateY(2px);
-            box-shadow: 0 3px 0 #FFE66D;
-        }
-        
-        /* Challenge mode */
-        .challenge-hud {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: white;
-            border-radius: 20px;
-            border: 3px solid #eb4d4b;
-            margin-bottom: 20px;
-            max-width: 400px;
-        }
-        
-        .hud-item {
-            flex: 1;
-            text-align: center;
-        }
-        
-        .hud-label {
-            font-size: 12px;
-            color: #888;
-            display: block;
-        }
-        
-        .hud-value {
-            font-size: 24px;
-            color: #eb4d4b;
-            font-weight: bold;
-        }
-        
-        .challenge-instruction {
             font-size: 20px;
-            color: #555;
-            margin-bottom: 15px;
-        }
-        
-        /* Admin mode */
-        .admin-section {
-            width: 100%;
-            max-width: 500px;
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            margin: 15px 0;
-            border: 2px solid #ddd;
-            text-align: left;
-        }
-        
-        .admin-section h3 {
-            color: #555;
-            margin-bottom: 15px;
-        }
-        
-        .admin-input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-        
-        .slider-container {
-            margin: 15px 0;
-        }
-        
-        .slider {
-            width: 100%;
-            margin: 10px 0;
-        }
-        
-        .word-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin: 10px 0;
-        }
-        
-        .word-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .word-item label {
             display: flex;
             align-items: center;
-            gap: 10px;
-            cursor: pointer;
+            justify-content: center;
         }
         
-        .toggle-switch {
-            position: relative;
-            width: 44px;
-            height: 24px;
-            background: #ccc;
-            border-radius: 24px;
-            cursor: pointer;
-        }
-        
-        .toggle-switch.active {
-            background: #4ECDC4;
-        }
-        
-        .danger-btn {
-            background: #ff9f43;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        
-        /* Library */
-        .library-list {
-            width: 100%;
-            max-width: 500px;
-            margin-top: 20px;
-        }
-        
-        .library-item {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            border: 2px solid #e0e0e0;
-        }
-        
-        .library-item span:first-child {
-            font-size: 24px;
-            text-transform: lowercase;
-            font-weight: bold;
-            color: #555;
-        }
-        
-        .library-item span:last-child {
-            color: #f1c40f;
-        }
-        
-        /* Results overlay */
-        .results-overlay {
+        /* Password Modal */
+        .password-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -401,140 +70,22 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
         }
         
-        .results-card {
+        .password-card {
             background: white;
             padding: 30px;
-            border-radius: 30px;
-            max-width: 400px;
-            width: 90%;
+            border-radius: 20px;
             text-align: center;
+            max-width: 300px;
+            width: 90%;
         }
         
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            font-size: 18px;
-        }
-        
-        .practice-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin: 15px 0;
-        }
-        
-        .practice-tag {
-            background: #ffebee;
-            color: #FF6B6B;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 14px;
-        }
-        
-        /* Navigation bar */
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .nav-item {
-            background: none;
-            border: none;
-            font-size: 12px;
-            cursor: pointer;
-            padding: 10px;
-            color: #888;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .nav-item.active {
-            color: #FF6B6B;
-        }
-        
-        /* Utilities */
-        .coming-soon {
+        .password-card h3 {
+            margin-bottom: 15px;
             color: #555;
-            font-size: 20px;
-            margin: 40px 0;
         }
         
-        .home-btn {
-            padding: 15px 30px;
-            background: #4ECDC4;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-    </style>
-
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-</head>
-<body>
-    <div class="header">
-        <h1>Small Steps Spelling ✨</h1>
-    </div>
-
-    <div class="main-container">
-        <div id="home" class="screen active"></div>
-        <div id="learn" class="screen"></div>
-        <div id="spell" class="screen"></div>
-        <div id="match" class="screen"></div>
-        <div id="challenge" class="screen"></div>
-        <div id="library" class="screen"></div>
-        <div id="admin" class="screen"></div>
-    </div>
-
-    <!-- Results Overlay -->
-    <div id="results-overlay" class="results-overlay" onclick="if(event.target===this)closeResults()">
-        <div class="results-card">
-            <h2 style="color: #45aaf2; margin-bottom: 20px;">Time's Up! 🏁</h2>
-            <div class="stat-row"><span>Final Score:</span><strong id="res-score" style="color: #eb4d4b;">0</strong></div>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 10px 0;">
-            <div class="stat-row"><span>✅ Correct:</span><strong id="res-correct" style="color: #2ecc71;">0</strong></div>
-            <div class="stat-row"><span>❌ Wrong:</span><strong id="res-wrong" style="color: #FF6B6B;">0</strong></div>
-            <h3 style="margin: 20px 0 10px; color: #555;">Practice These:</h3>
-            <div id="res-practice" class="practice-tags"></div>
-            <button class="home-btn" onclick="closeResults()" style="margin-top: 20px;">BACK TO HOME</button>
-        </div>
-    </div>
-
-    <nav class="nav-bar">
-        <button class="nav-item active" onclick="showScreen('home')">🏠<br>Home</button>
-        <button class="nav-item" onclick="showScreen('learn')">📖<br>Learn</button>
-        <button class="nav-item" onclick="showScreen('spell')">✏️<br>Spell</button>
-        <button class="nav-item" onclick="showScreen('match')">🧩<br>Match</button>
-        <button class="nav-item" onclick="showScreen('challenge')">🔥<br>Chall.</button>
-        <button class="nav-item" onclick="showScreen('library')">📚<br>Lib</button>
-    </nav>
-
-    <script src="./js/app.js"></script>
-</body>
-</html>
+        .password-card input {
+            width: 100
