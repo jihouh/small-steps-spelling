@@ -70,6 +70,23 @@ function getTotalStars() {
     return parseInt(getStorage('engTotalStars', '0'));
 }
 
+function getDifficulty() {
+    return parseInt(getStorage('ss_difficulty', '50'));
+}
+
+function saveWordProgress(word) {
+    const list = getWordList();
+    const item = list.find(w => w.word === word);
+    if (item) {
+        item.count++;
+        const currentStars = getTotalStars();
+        setStorage('engTotalStars', currentStars + 1);
+        setStorage('ss_wordlist', list);
+        return true;
+    }
+    return false;
+}
+
 // ===== AUDIO =====
 function speak(text) {
     if (!window.speechSynthesis) return;
@@ -100,13 +117,14 @@ function delay(ms) {
 // ===== NAVIGATION =====
 let currentScreen = 'home';
 let learnIndex = 0;
+let spellIndex = 0;
+let spellInput = '';
+let currentSpellWord = '';
 
 function showScreen(screenId) {
-    // Hide all
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
-    // Show new
     const screen = document.getElementById(screenId);
     if (screen) {
         screen.classList.add('active');
@@ -126,7 +144,7 @@ function showScreen(screenId) {
     window.scrollTo(0, 0);
 }
 
-// ===== RENDER =====
+// ===== RENDER HOME =====
 function renderHome() {
     const container = document.getElementById('home');
     const userName = getUserName();
@@ -153,6 +171,7 @@ function renderHome() {
     `;
 }
 
+// ===== RENDER LEARN =====
 function renderLearn() {
     const container = document.getElementById('learn');
     const words = getWordList().filter(w => w.active);
@@ -187,13 +206,142 @@ function prevLearn() {
     renderLearn();
 }
 
+// ===== RENDER SPELL (NEW!) =====
 function renderSpell() {
-    document.getElementById('spell').innerHTML = `
-        <p class="coming-soon">Spell mode coming soon!</p>
-        <button class="home-btn" onclick="showScreen('home')">Back to Home</button>
+    const container = document.getElementById('spell');
+    const words = getWordList().filter(w => w.active);
+    
+    if (!words.length) {
+        container.innerHTML = '<p class="coming-soon">No words available.</p>';
+        return;
+    }
+    
+    spellIndex = ((spellIndex % words.length) + words.length) % words.length;
+    const wordObj = words[spellIndex];
+    currentSpellWord = wordObj.word;
+    spellInput = '';
+    
+    // Remove spaces for spelling
+    const cleanWord = currentSpellWord.replace(/\s/g, '');
+    const difficulty = getDifficulty();
+    const totalLetters = cleanWord.length;
+    const hiddenCount = Math.ceil(totalLetters * (difficulty / 100));
+    
+    // Choose which positions to hide
+    const hidePositions = [];
+    while (hidePositions.length < hiddenCount) {
+        const pos = Math.floor(Math.random() * totalLetters);
+        if (!hidePositions.includes(pos)) hidePositions.push(pos);
+    }
+    hidePositions.sort((a, b) => a - b);
+    
+    // Build slots HTML
+    let slotsHTML = '';
+    for (let i = 0; i < totalLetters; i++) {
+        const isHidden = hidePositions.includes(i);
+        const letter = cleanWord[i];
+        slotsHTML += `<div class="spell-slot ${isHidden ? 'empty' : 'filled'}" data-index="${i}">${isHidden ? '' : letter}</div>`;
+    }
+    
+    // Build letter pool (scrambled)
+    const poolLetters = cleanWord.split('').sort(() => 0.5 - Math.random());
+    let poolHTML = '';
+    poolLetters.forEach((letter, idx) => {
+        poolHTML += `<button class="letter-btn" onclick="handleLetterClick('${letter}', this)">${letter}</button>`;
+    });
+    
+    container.innerHTML = `
+        <p style="color: #555; font-size: 18px; margin-bottom: 10px;">Spell the word!</p>
+        <img src="${wordObj.img}" class="word-image" alt="${currentSpellWord}">
+        <div class="spell-slots">${slotsHTML}</div>
+        <div class="letter-pool">${poolHTML}</div>
+        <div class="nav-buttons">
+            <button class="nav-btn btn-back" onclick="prevSpell()">⬅️ BACK</button>
+            <button class="nav-btn" style="background: #ff9f43; color: white;" onclick="handleBackspace()">⌫ DELETE</button>
+        </div>
     `;
 }
 
+function handleLetterClick(letter, btn) {
+    const slots = document.querySelectorAll('.spell-slot.empty');
+    const cleanWord = currentSpellWord.replace(/\s/g, '');
+    
+    if (spellInput.length < slots.length) {
+        // Find next empty slot
+        const emptySlots = document.querySelectorAll('.spell-slot.empty:not(.has-letter)');
+        if (emptySlots.length > 0) {
+            const slot = emptySlots[0];
+            slot.textContent = letter;
+            slot.classList.add('has-letter');
+            spellInput += letter;
+            
+            // Visual feedback
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => btn.style.transform = 'scale(1)', 100);
+            
+            speak(letter);
+            
+            // Check if complete
+            if (spellInput.length === cleanWord.length) {
+                checkSpelling();
+            }
+        }
+    }
+}
+
+function handleBackspace() {
+    const filledSlots = document.querySelectorAll('.spell-slot.has-letter');
+    if (filledSlots.length > 0) {
+        const lastSlot = filledSlots[filledSlots.length - 1];
+        lastSlot.textContent = '';
+        lastSlot.classList.remove('has-letter');
+        spellInput = spellInput.slice(0, -1);
+    }
+}
+
+function checkSpelling() {
+    const cleanWord = currentSpellWord.replace(/\s/g, '');
+    const slots = document.querySelectorAll('.spell-slot');
+    let spelledWord = '';
+    slots.forEach(slot => spelledWord += slot.textContent);
+    
+    if (spelledWord === cleanWord) {
+        // Correct!
+        speak('Great job! ' + currentSpellWord);
+        saveWordProgress(currentSpellWord);
+        
+        // Visual celebration
+        document.querySelector('.spell-slots').style.animation = 'bounce 0.5s';
+        
+        setTimeout(() => {
+            spellIndex++;
+            renderSpell();
+        }, 1500);
+    } else {
+        // Wrong
+        speak('Try again');
+        document.querySelector('.spell-slots').style.animation = 'shake 0.5s';
+        setTimeout(() => {
+            document.querySelector('.spell-slots').style.animation = '';
+            // Clear after delay
+            setTimeout(() => {
+                spellInput = '';
+                document.querySelectorAll('.spell-slot.has-letter').forEach(slot => {
+                    slot.textContent = '';
+                    slot.classList.remove('has-letter');
+                });
+            }, 500);
+        }, 500);
+    }
+}
+
+function prevSpell() {
+    spellIndex--;
+    if (spellIndex < 0) spellIndex = 0;
+    renderSpell();
+}
+
+// ===== RENDER MATCH =====
 function renderMatch() {
     document.getElementById('match').innerHTML = `
         <p class="coming-soon">Match mode coming soon!</p>
@@ -201,6 +349,7 @@ function renderMatch() {
     `;
 }
 
+// ===== RENDER CHALLENGE =====
 function renderChallenge() {
     document.getElementById('challenge').innerHTML = `
         <p class="coming-soon">Challenge mode coming soon!</p>
@@ -208,6 +357,7 @@ function renderChallenge() {
     `;
 }
 
+// ===== RENDER LIBRARY =====
 function renderLibrary() {
     const container = document.getElementById('library');
     const words = getWordList().filter(w => w.active);
