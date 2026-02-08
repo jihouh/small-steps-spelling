@@ -203,65 +203,21 @@ function toggleFullscreen() {
 }
 
 // ===== SPEECH - FIXED =====
-let speechQueue = [];
-let isSpeaking = false;
-
-async function processSpeechQueue() {
-    if (isSpeaking || speechQueue.length === 0) return;
-    
-    isSpeaking = true;
-    const text = speechQueue.shift();
-    
-    return new Promise((resolve) => {
-        const u = new SpeechSynthesisUtterance(text);
-        u.rate = 0.85;
-        u.lang = 'en-US';
-        u.onend = () => {
-            isSpeaking = false;
-            resolve();
-            processSpeechQueue(); // Process next in queue
-        };
-        u.onerror = () => {
-            isSpeaking = false;
-            resolve();
-            processSpeechQueue();
-        };
-        window.speechSynthesis.speak(u);
-    });
-}
-
 function speak(text) {
     if (!window.speechSynthesis) return;
-    speechQueue.push(text);
-    processSpeechQueue();
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85;
+    u.lang = 'en-US';
+    window.speechSynthesis.speak(u);
 }
 
-async function spellOut(word) {
-    // Clear any pending speech
-    speechQueue = [];
-    window.speechSynthesis.cancel();
-    await delay(100);
-    
-    // Queue all parts
-    const cleanWord = word.toLowerCase().trim();
-    
-    // Say full word
-    speak(cleanWord);
-    await delay(1200);
-    
-    // Spell each letter with longer pauses
-    for (let char of cleanWord) {
-        if (char !== ' ') {
-            speak(char);
-            await delay(700); // Longer pause between letters
-        }
-    }
-    
-    await delay(500);
-    speak(cleanWord);
-}
-function speakAndWait(text) {
+async function speakAndWait(text) {
     return new Promise((resolve) => {
+        if (!window.speechSynthesis) {
+            resolve();
+            return;
+        }
         const u = new SpeechSynthesisUtterance(text);
         u.rate = 0.85;
         u.lang = 'en-US';
@@ -270,6 +226,30 @@ function speakAndWait(text) {
         window.speechSynthesis.speak(u);
     });
 }
+
+async function spellOut(word) {
+    const cleanWord = word.toLowerCase().trim();
+    
+    // Full word
+    await speakAndWait(cleanWord);
+    await delay(1000);
+    
+    // Each letter with proper wait
+    for (let char of cleanWord) {
+        if (char !== ' ') {
+            await speakAndWait(char);
+            await delay(600);
+        }
+    }
+    
+    await delay(400);
+    await speakAndWait(cleanWord);
+}
+
+function delay(ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+
 // ===== CONFETTI =====
 function celebrate(options = {}) {
     if (typeof confetti === 'undefined') return;
@@ -402,7 +382,7 @@ function prevLearn() {
     renderLearn();
 }
 
-// ===== SPELL - FIXED =====
+// ===== SPELL =====
 function renderSpell() {
     const container = document.getElementById('spell');
     const words = getOrderedWords();
@@ -412,7 +392,6 @@ function renderSpell() {
         return;
     }
     
-    // Ensure index is within bounds
     spellIndex = spellIndex % words.length;
     if (spellIndex < 0) spellIndex = 0;
     
@@ -822,7 +801,7 @@ function closeResults() {
     showScreen('home');
 }
 
-// ===== LIBRARY - NEW DESIGN =====
+// ===== LIBRARY =====
 function renderLibrary() {
     const container = document.getElementById('library');
     const words = getWordList();
@@ -847,7 +826,7 @@ function renderLibrary() {
     container.innerHTML = html;
 }
 
-// ===== ADMIN - UPDATED =====
+// ===== ADMIN =====
 function renderAdmin() {
     const container = document.getElementById('admin');
     const words = getWordList();
