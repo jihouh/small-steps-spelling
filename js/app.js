@@ -213,22 +213,37 @@ function speak(text) {
 }
 
 async function spellOut(word) {
-    speak(word);
-    await delay(800);
-    for (let char of word) {
+    if (!window.speechSynthesis) return;
+    
+    window.speechSynthesis.cancel();
+    const cleanWord = word.toLowerCase().trim();
+    
+    // Say full word and WAIT for it
+    await speakAndWait(cleanWord);
+    await delay(1000);
+    
+    // Say each letter and WAIT for each
+    for (let char of cleanWord) {
         if (char !== ' ') {
-            speak(char);
-            await delay(500);
+            await speakAndWait(char);
+            await delay(600);
         }
     }
+    
     await delay(400);
-    speak(word);
+    await speakAndWait(cleanWord);
 }
 
-function delay(ms) {
-    return new Promise(r => setTimeout(r, ms));
+function speakAndWait(text) {
+    return new Promise((resolve) => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        u.lang = 'en-US';
+        u.onend = resolve;
+        u.onerror = resolve;
+        window.speechSynthesis.speak(u);
+    });
 }
-
 // ===== CONFETTI =====
 function celebrate(options = {}) {
     if (typeof confetti === 'undefined') return;
