@@ -74,6 +74,14 @@ function getDifficulty() {
     return parseInt(getStorage('ss_difficulty', '50'));
 }
 
+function getChallengeTimer() {
+    return parseInt(getStorage('ss_ch_timer', '60'));
+}
+
+function getHighScore() {
+    return parseInt(getStorage('ss_ch_high', '0'));
+}
+
 function saveWordProgress(word) {
     const list = getWordList();
     const item = list.find(w => w.word === word);
@@ -118,10 +126,17 @@ function delay(ms) {
 let currentScreen = 'home';
 let learnIndex = 0;
 let spellIndex = 0;
+let matchIndex = 0;
 let spellInput = '';
 let currentSpellWord = '';
 
 function showScreen(screenId) {
+    // Stop challenge if running
+    if (challengeTimer) {
+        clearInterval(challengeTimer);
+        challengeTimer = null;
+    }
+    
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
@@ -139,12 +154,13 @@ function showScreen(screenId) {
         else if (screenId === 'match') renderMatch();
         else if (screenId === 'challenge') renderChallenge();
         else if (screenId === 'library') renderLibrary();
+        else if (screenId === 'admin') renderAdmin();
     }
     
     window.scrollTo(0, 0);
 }
 
-// ===== RENDER HOME =====
+// ===== HOME =====
 function renderHome() {
     const container = document.getElementById('home');
     const userName = getUserName();
@@ -167,11 +183,12 @@ function renderHome() {
             <button class="btn btn-match" onclick="showScreen('match')">🧩 MATCH</button>
             <button class="btn btn-challenge" onclick="showScreen('challenge')">🔥 CHALLENGE</button>
             <button class="btn btn-library" onclick="showScreen('library')">📚 LIBRARY</button>
+            <button class="btn btn-admin" onclick="showScreen('admin')">⚙️ PARENT SETTINGS</button>
         </div>
     `;
 }
 
-// ===== RENDER LEARN =====
+// ===== LEARN =====
 function renderLearn() {
     const container = document.getElementById('learn');
     const words = getWordList().filter(w => w.active);
@@ -206,7 +223,7 @@ function prevLearn() {
     renderLearn();
 }
 
-// ===== RENDER SPELL (NEW!) =====
+// ===== SPELL =====
 function renderSpell() {
     const container = document.getElementById('spell');
     const words = getWordList().filter(w => w.active);
@@ -221,13 +238,11 @@ function renderSpell() {
     currentSpellWord = wordObj.word;
     spellInput = '';
     
-    // Remove spaces for spelling
     const cleanWord = currentSpellWord.replace(/\s/g, '');
     const difficulty = getDifficulty();
     const totalLetters = cleanWord.length;
     const hiddenCount = Math.ceil(totalLetters * (difficulty / 100));
     
-    // Choose which positions to hide
     const hidePositions = [];
     while (hidePositions.length < hiddenCount) {
         const pos = Math.floor(Math.random() * totalLetters);
@@ -235,7 +250,6 @@ function renderSpell() {
     }
     hidePositions.sort((a, b) => a - b);
     
-    // Build slots HTML
     let slotsHTML = '';
     for (let i = 0; i < totalLetters; i++) {
         const isHidden = hidePositions.includes(i);
@@ -243,10 +257,9 @@ function renderSpell() {
         slotsHTML += `<div class="spell-slot ${isHidden ? 'empty' : 'filled'}" data-index="${i}">${isHidden ? '' : letter}</div>`;
     }
     
-    // Build letter pool (scrambled)
     const poolLetters = cleanWord.split('').sort(() => 0.5 - Math.random());
     let poolHTML = '';
-    poolLetters.forEach((letter, idx) => {
+    poolLetters.forEach((letter) => {
         poolHTML += `<button class="letter-btn" onclick="handleLetterClick('${letter}', this)">${letter}</button>`;
     });
     
@@ -263,11 +276,9 @@ function renderSpell() {
 }
 
 function handleLetterClick(letter, btn) {
-    const slots = document.querySelectorAll('.spell-slot.empty');
     const cleanWord = currentSpellWord.replace(/\s/g, '');
     
-    if (spellInput.length < slots.length) {
-        // Find next empty slot
+    if (spellInput.length < cleanWord.length) {
         const emptySlots = document.querySelectorAll('.spell-slot.empty:not(.has-letter)');
         if (emptySlots.length > 0) {
             const slot = emptySlots[0];
@@ -275,13 +286,11 @@ function handleLetterClick(letter, btn) {
             slot.classList.add('has-letter');
             spellInput += letter;
             
-            // Visual feedback
             btn.style.transform = 'scale(0.9)';
             setTimeout(() => btn.style.transform = 'scale(1)', 100);
             
             speak(letter);
             
-            // Check if complete
             if (spellInput.length === cleanWord.length) {
                 checkSpelling();
             }
@@ -306,24 +315,18 @@ function checkSpelling() {
     slots.forEach(slot => spelledWord += slot.textContent);
     
     if (spelledWord === cleanWord) {
-        // Correct!
         speak('Great job! ' + currentSpellWord);
         saveWordProgress(currentSpellWord);
-        
-        // Visual celebration
         document.querySelector('.spell-slots').style.animation = 'bounce 0.5s';
-        
         setTimeout(() => {
             spellIndex++;
             renderSpell();
         }, 1500);
     } else {
-        // Wrong
         speak('Try again');
         document.querySelector('.spell-slots').style.animation = 'shake 0.5s';
         setTimeout(() => {
             document.querySelector('.spell-slots').style.animation = '';
-            // Clear after delay
             setTimeout(() => {
                 spellInput = '';
                 document.querySelectorAll('.spell-slot.has-letter').forEach(slot => {
@@ -341,23 +344,416 @@ function prevSpell() {
     renderSpell();
 }
 
-// ===== RENDER MATCH =====
+// ===== MATCH =====
 function renderMatch() {
-    document.getElementById('match').innerHTML = `
-        <p class="coming-soon">Match mode coming soon!</p>
-        <button class="home-btn" onclick="showScreen('home')">Back to Home</button>
+    const container = document.getElementById('match');
+    const words = getWordList().filter(w => w.active);
+    
+    if (!words.length) {
+        container.innerHTML = '<p class="coming-soon">No words available.</p>';
+        return;
+    }
+    
+    matchIndex = ((matchIndex % words.length) + words.length) % words.length;
+    const correctWord = words[matchIndex];
+    
+    // Get 2 random wrong answers
+    const otherWords = words
+        .filter(w => w.word !== correctWord.word)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 2);
+    
+    const options = [correctWord, ...otherWords].sort(() => 0.5 - Math.random());
+    
+    let buttonsHTML = '';
+    options.forEach(opt => {
+        buttonsHTML += `<button class="match-btn" onclick="checkMatch('${opt.word}', '${correctWord.word}')">${opt.word}</button>`;
+    });
+    
+    container.innerHTML = `
+        <p style="color: #555; font-size: 18px; margin-bottom: 10px;">Find the matching word!</p>
+        <img src="${correctWord.img}" class="word-image" alt="What is this?">
+        <div style="width: 100%; max-width: 400px;">${buttonsHTML}</div>
+        <div class="nav-buttons">
+            <button class="nav-btn btn-back" onclick="prevMatch()">⬅️ BACK</button>
+            <button class="nav-btn btn-next" onclick="nextMatch()">SKIP ➡️</button>
+        </div>
     `;
 }
 
-// ===== RENDER CHALLENGE =====
+function checkMatch(selected, correct) {
+    if (selected === correct) {
+        speak('Great job! ' + correct);
+        saveWordProgress(correct);
+        const btn = event.target;
+        btn.style.background = '#2ecc71';
+        btn.style.color = 'white';
+        setTimeout(() => {
+            matchIndex++;
+            renderMatch();
+        }, 1000);
+    } else {
+        speak('Try again');
+        const btn = event.target;
+        btn.style.animation = 'shake 0.5s';
+        btn.style.borderColor = '#FF6B6B';
+    }
+}
+
+function nextMatch() {
+    matchIndex++;
+    renderMatch();
+}
+
+function prevMatch() {
+    matchIndex--;
+    if (matchIndex < 0) matchIndex = 0;
+    renderMatch();
+}
+
+// ===== CHALLENGE =====
+let challengeTimer = null;
+let challengeTimeLeft = 0;
+let challengeScore = 0;
+let challengeCorrect = 0;
+let challengeWrong = 0;
+let challengePracticeWords = [];
+let challengeTaskType = 'match';
+let challengeCurrentWord = null;
+
 function renderChallenge() {
-    document.getElementById('challenge').innerHTML = `
-        <p class="coming-soon">Challenge mode coming soon!</p>
-        <button class="home-btn" onclick="showScreen('home')">Back to Home</button>
+    const container = document.getElementById('challenge');
+    const words = getWordList().filter(w => w.active);
+    
+    if (!words.length) {
+        container.innerHTML = '<p class="coming-soon">No words available. Add words in settings.</p>';
+        return;
+    }
+    
+    // Reset challenge
+    challengeTimeLeft = getChallengeTimer();
+    challengeScore = 0;
+    challengeCorrect = 0;
+    challengeWrong = 0;
+    challengePracticeWords = [];
+    challengeTaskType = 'match';
+    
+    container.innerHTML = `
+        <div class="challenge-hud">
+            <div class="hud-item">
+                <span class="hud-label">Best</span>
+                <span class="hud-value" id="ch-high">${getHighScore()}</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Time</span>
+                <span class="hud-value" id="ch-time">${formatTime(challengeTimeLeft)}</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Score</span>
+                <span class="hud-value" id="ch-score">0</span>
+            </div>
+        </div>
+        <div id="challenge-area"></div>
+    `;
+    
+    startChallengeTimer();
+    nextChallengeTask();
+}
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function startChallengeTimer() {
+    updateChallengeHUD();
+    
+    challengeTimer = setInterval(() => {
+        challengeTimeLeft--;
+        updateChallengeHUD();
+        
+        if (challengeTimeLeft <= 0) {
+            endChallenge();
+        } else if (challengeTimeLeft <= 10) {
+            document.getElementById('ch-time').style.color = '#FF6B6B';
+        }
+    }, 1000);
+}
+
+function updateChallengeHUD() {
+    document.getElementById('ch-time').textContent = formatTime(challengeTimeLeft);
+    document.getElementById('ch-score').textContent = challengeScore;
+}
+
+function nextChallengeTask() {
+    const words = getWordList().filter(w => w.active);
+    const area = document.getElementById('challenge-area');
+    
+    // Alternate between match and spell
+    challengeTaskType = challengeTaskType === 'match' ? 'spell' : 'match';
+    challengeCurrentWord = words[Math.floor(Math.random() * words.length)];
+    const cleanWord = challengeCurrentWord.word.replace(/\s/g, '');
+    
+    if (challengeTaskType === 'match') {
+        // Match task
+        const otherWords = words
+            .filter(w => w.word !== challengeCurrentWord.word)
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 2);
+        const options = [challengeCurrentWord, ...otherWords].sort(() => 0.5 - Math.random());
+        
+        let buttonsHTML = '';
+        options.forEach(opt => {
+            buttonsHTML += `<button class="match-btn" onclick="handleChallengeMatch('${opt.word}')">${opt.word}</button>`;
+        });
+        
+        area.innerHTML = `
+            <p class="challenge-instruction">Match it!</p>
+            <img src="${challengeCurrentWord.img}" class="word-image" alt="Match this">
+            <div style="width: 100%; max-width: 400px;">${buttonsHTML}</div>
+        `;
+    } else {
+        // Spell task
+        let slotsHTML = '';
+        for (let i = 0; i < cleanWord.length; i++) {
+            slotsHTML += `<div class="spell-slot empty" id="ch-slot-${i}"></div>`;
+        }
+        
+        const poolLetters = cleanWord.split('').sort(() => 0.5 - Math.random());
+        let poolHTML = '';
+        poolLetters.forEach((letter) => {
+            poolHTML += `<button class="letter-btn" onclick="handleChallengeLetter('${letter}')">${letter}</button>`;
+        });
+        
+        area.innerHTML = `
+            <p class="challenge-instruction">Spell it!</p>
+            <img src="${challengeCurrentWord.img}" class="word-image" alt="Spell this">
+            <div class="spell-slots">${slotsHTML}</div>
+            <div class="letter-pool">${poolHTML}</div>
+        `;
+    }
+}
+
+let challengeSpellInput = '';
+
+function handleChallengeMatch(selected) {
+    if (selected === challengeCurrentWord.word) {
+        challengeScore += 10;
+        challengeCorrect++;
+        speak('Great!');
+        setTimeout(nextChallengeTask, 400);
+    } else {
+        speak('Try again');
+        challengeWrong++;
+        if (!challengePracticeWords.includes(challengeCurrentWord.word)) {
+            challengePracticeWords.push(challengeCurrentWord.word);
+        }
+    }
+    updateChallengeHUD();
+}
+
+function handleChallengeLetter(letter) {
+    const cleanWord = challengeCurrentWord.word.replace(/\s/g, '');
+    
+    if (challengeSpellInput.length < cleanWord.length) {
+        const slot = document.getElementById(`ch-slot-${challengeSpellInput.length}`);
+        slot.textContent = letter;
+        slot.classList.add('has-letter');
+        challengeSpellInput += letter;
+        
+        if (challengeSpellInput === cleanWord) {
+            challengeScore += 20;
+            challengeCorrect++;
+            speak('Excellent!');
+            challengeSpellInput = '';
+            setTimeout(nextChallengeTask, 400);
+        } else if (challengeSpellInput.length === cleanWord.length) {
+            speak('Try again');
+            challengeWrong++;
+            if (!challengePracticeWords.includes(challengeCurrentWord.word)) {
+                challengePracticeWords.push(challengeCurrentWord.word);
+            }
+            setTimeout(() => {
+                challengeSpellInput = '';
+                for (let i = 0; i < cleanWord.length; i++) {
+                    const s = document.getElementById(`ch-slot-${i}`);
+                    s.textContent = '';
+                    s.classList.remove('has-letter');
+                }
+            }, 600);
+        }
+    }
+    updateChallengeHUD();
+}
+
+function endChallenge() {
+    clearInterval(challengeTimer);
+    challengeTimer = null;
+    
+    // Save high score
+    const currentHigh = getHighScore();
+    if (challengeScore > currentHigh) {
+        setStorage('ss_ch_high', challengeScore);
+    }
+    
+    // Show results
+    document.getElementById('res-score').textContent = challengeScore;
+    document.getElementById('res-correct').textContent = challengeCorrect;
+    document.getElementById('res-wrong').textContent = challengeWrong;
+    
+    const practiceDiv = document.getElementById('res-practice');
+    if (challengePracticeWords.length > 0) {
+        practiceDiv.innerHTML = challengePracticeWords.map(w => 
+            `<span class="practice-tag">${w}</span>`
+        ).join('');
+    } else {
+        practiceDiv.innerHTML = '<p style="color: #888;">Perfect! No mistakes! 🌟</p>';
+    }
+    
+    document.getElementById('results-overlay').style.display = 'flex';
+}
+
+function closeResults() {
+    document.getElementById('results-overlay').style.display = 'none';
+    showScreen('home');
+}
+
+// ===== ADMIN =====
+function renderAdmin() {
+    const container = document.getElementById('admin');
+    const words = getWordList();
+    
+    let wordListHTML = '';
+    words.forEach((w, i) => {
+        wordListHTML += `
+            <div class="word-item">
+                <label>
+                    <input type="checkbox" ${w.active ? 'checked' : ''} onchange="toggleWord(${i})">
+                    <span>${w.word}</span>
+                </label>
+                <span>🌟 ${w.count}</span>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = `
+        <h2 style="color: #555; margin-bottom: 20px;">⚙️ Parent Settings</h2>
+        
+        <div class="admin-section">
+            <h3>Student Name</h3>
+            <input type="text" class="admin-input" id="admin-name" value="${getUserName()}" placeholder="Enter name">
+            <button class="home-btn" onclick="saveName()" style="width: 100%; margin-top: 10px;">Save Name</button>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Spelling Difficulty</h3>
+            <p style="color: #777; font-size: 14px;">How many letters to hide: <strong id="diff-val">${getDifficulty()}%</strong></p>
+            <input type="range" class="slider" min="0" max="100" step="25" value="${getDifficulty()}" 
+                   oninput="updateDifficulty(this.value)">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+                <span>Easy (0%)</span>
+                <span>Hard (100%)</span>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Challenge Timer</h3>
+            <p style="color: #777; font-size: 14px;">Duration: <strong id="timer-val">${getChallengeTimer()} seconds</strong></p>
+            <input type="range" class="slider" min="30" max="180" step="30" value="${getChallengeTimer()}" 
+                   oninput="updateTimer(this.value)">
+        </div>
+        
+        <div class="admin-section">
+            <h3>Add New Word</h3>
+            <input type="text" class="admin-input" id="new-word" placeholder="Word (e.g., apple)">
+            <input type="text" class="admin-input" id="new-img" placeholder="Image URL">
+            <button class="home-btn" onclick="addWord()" style="width: 100%; margin-top: 10px;">Add Word</button>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Word List (${words.filter(w => w.active).length} active)</h3>
+            <div class="word-list">${wordListHTML}</div>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Progress</h3>
+            <p>Total Stars: 🌟 ${getTotalStars()}</p>
+            <p>Challenge High Score: ${getHighScore()}</p>
+            <button class="danger-btn" onclick="resetAll()">⚠️ RESET ALL PROGRESS</button>
+        </div>
+        
+        <button class="home-btn" onclick="showScreen('home')" style="margin-top: 20px;">Back to Home</button>
     `;
 }
 
-// ===== RENDER LIBRARY =====
+function saveName() {
+    const name = document.getElementById('admin-name').value.trim();
+    if (name) {
+        setStorage('ss_username', name);
+        alert('Name saved!');
+    }
+}
+
+function updateDifficulty(val) {
+    document.getElementById('diff-val').textContent = val + '%';
+    setStorage('ss_difficulty', val);
+}
+
+function updateTimer(val) {
+    document.getElementById('timer-val').textContent = val + ' seconds';
+    setStorage('ss_ch_timer', val);
+}
+
+function toggleWord(index) {
+    const list = getWordList();
+    list[index].active = !list[index].active;
+    setStorage('ss_wordlist', list);
+    renderAdmin();
+}
+
+function addWord() {
+    const word = document.getElementById('new-word').value.trim().toLowerCase();
+    const img = document.getElementById('new-img').value.trim();
+    
+    if (!word || !img) {
+        alert('Please enter both word and image URL');
+        return;
+    }
+    
+    if (!/^[a-z\s]+$/.test(word)) {
+        alert('Word must contain only letters');
+        return;
+    }
+    
+    const list = getWordList();
+    if (list.find(w => w.word === word)) {
+        alert('Word already exists!');
+        return;
+    }
+    
+    list.push({ word, img, count: 0, active: true });
+    setStorage('ss_wordlist', list);
+    
+    document.getElementById('new-word').value = '';
+    document.getElementById('new-img').value = '';
+    
+    renderAdmin();
+    alert('Word added!');
+}
+
+function resetAll() {
+    if (confirm('⚠️ Are you sure? This will delete ALL progress!')) {
+        setStorage('ss_wordlist', DEFAULT_WORDS);
+        setStorage('engTotalStars', '0');
+        setStorage('ss_ch_high', '0');
+        setStorage('ss_username', 'Student');
+        alert('All progress reset!');
+        renderAdmin();
+    }
+}
+
+// ===== LIBRARY =====
 function renderLibrary() {
     const container = document.getElementById('library');
     const words = getWordList().filter(w => w.active);
