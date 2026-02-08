@@ -1,4 +1,4 @@
-// ===== CONSTANTS =====
+s// ===== CONSTANTS =====
 const QUOTES = [
     "Mistakes are proof that you are trying! 🌟",
     "Every small step leads to a giant leap! 🚀",
@@ -232,13 +232,13 @@ async function spellOut(word) {
     
     // Full word
     await speakAndWait(cleanWord);
-    await delay(1000);
+    await delay(800);
     
     // Each letter with proper wait
     for (let char of cleanWord) {
         if (char !== ' ') {
             await speakAndWait(char);
-            await delay(600);
+            await delay(500);
         }
     }
     
@@ -996,3 +996,4 @@ function resetAll() {
 document.addEventListener('DOMContentLoaded', function() {
     showScreen('home');
 });
+
