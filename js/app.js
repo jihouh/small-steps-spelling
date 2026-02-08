@@ -33,6 +33,67 @@ const DEFAULT_WORDS = [
     { word: 'banana', img: 'https://img.freepik.com/free-vector/vector-ripe-yellow-banana-bunch-isolated-white-background_1284-45456.jpg?semt=ais_hybrid&w=400', count: 0, active: true }
 ];
 
+// ===== AUDIO SYSTEM =====
+const AudioSys = {
+    ctx: null,
+    
+    init() {
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Web Audio not supported');
+        }
+    },
+    
+    // Sound effects using Web Audio API
+    playTone(freq, type, duration) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.frequency.value = freq;
+        osc.type = type;
+        
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    },
+    
+    correct() {
+        // Happy ascending chime
+        this.playTone(523.25, 'sine', 0.1); // C5
+        setTimeout(() => this.playTone(659.25, 'sine', 0.1), 50); // E5
+        setTimeout(() => this.playTone(783.99, 'sine', 0.2), 100); // G5
+    },
+    
+    wrong() {
+        // Low buzz
+        this.playTone(150, 'sawtooth', 0.3);
+    },
+    
+    click() {
+        // Soft pop
+        this.playTone(800, 'sine', 0.05);
+    },
+    
+    success() {
+        // Victory fanfare
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            setTimeout(() => this.playTone(freq, 'sine', 0.15), i * 100);
+        });
+    },
+    
+    challengeStart() {
+        // Countdown beeps
+        this.playTone(880, 'square', 0.1);
+    }
+};
+
 // ===== STATE =====
 function getStorage(key, defaultVal) {
     try {
@@ -95,7 +156,7 @@ function saveWordProgress(word) {
     return false;
 }
 
-// ===== AUDIO =====
+// ===== SPEECH =====
 function speak(text) {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
@@ -122,6 +183,27 @@ function delay(ms) {
     return new Promise(r => setTimeout(r, ms));
 }
 
+// ===== CONFETTI =====
+function celebrate(options = {}) {
+    if (typeof confetti === 'undefined') return;
+    
+    const defaults = {
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#45aaf2', '#a55eea']
+    };
+    
+    confetti({ ...defaults, ...options });
+}
+
+function bigCelebration() {
+    // Multiple bursts for big wins
+    celebrate({ particleCount: 150, spread: 100 });
+    setTimeout(() => celebrate({ particleCount: 100, spread: 120, origin: { y: 0.8 } }), 200);
+    setTimeout(() => celebrate({ particleCount: 80, spread: 150, origin: { y: 0.5 } }), 400);
+}
+
 // ===== NAVIGATION =====
 let currentScreen = 'home';
 let learnIndex = 0;
@@ -131,6 +213,12 @@ let spellInput = '';
 let currentSpellWord = '';
 
 function showScreen(screenId) {
+    // Init audio on first interaction
+    if (!AudioSys.ctx) AudioSys.init();
+    if (AudioSys.ctx && AudioSys.ctx.state === 'suspended') {
+        AudioSys.ctx.resume();
+    }
+    
     // Stop challenge if running
     if (challengeTimer) {
         clearInterval(challengeTimer);
@@ -170,7 +258,7 @@ function renderHome() {
     container.innerHTML = `
         <h2 style="color: #FF6B6B; font-family: cursive; font-size: 32px; margin-bottom: 10px;">Hi ${userName}! 👋</h2>
         
-        <div class="quote-card" onclick="speak('${quote.replace(/'/g, "\\'")}')">
+        <div class="quote-card" onclick="speak('${quote.replace(/'/g, "\\'")}'); AudioSys.click();">
             <p>${quote}</p>
             <small>(Tap to listen)</small>
         </div>
@@ -178,12 +266,12 @@ function renderHome() {
         <div class="stars-display">🌟 ${totalStars} Mastery Stars</div>
         
         <div class="button-grid">
-            <button class="btn btn-learn" onclick="showScreen('learn')">📖 LEARN</button>
-            <button class="btn btn-spell" onclick="showScreen('spell')">✏️ SPELL</button>
-            <button class="btn btn-match" onclick="showScreen('match')">🧩 MATCH</button>
-            <button class="btn btn-challenge" onclick="showScreen('challenge')">🔥 CHALLENGE</button>
-            <button class="btn btn-library" onclick="showScreen('library')">📚 LIBRARY</button>
-            <button class="btn btn-admin" onclick="showScreen('admin')">⚙️ PARENT SETTINGS</button>
+            <button class="btn btn-learn" onclick="AudioSys.click(); showScreen('learn')">📖 LEARN</button>
+            <button class="btn btn-spell" onclick="AudioSys.click(); showScreen('spell')">✏️ SPELL</button>
+            <button class="btn btn-match" onclick="AudioSys.click(); showScreen('match')">🧩 MATCH</button>
+            <button class="btn btn-challenge" onclick="AudioSys.click(); showScreen('challenge')">🔥 CHALLENGE</button>
+            <button class="btn btn-library" onclick="AudioSys.click(); showScreen('library')">📚 LIBRARY</button>
+            <button class="btn btn-admin" onclick="AudioSys.click(); showScreen('admin')">⚙️ PARENT SETTINGS</button>
         </div>
     `;
 }
@@ -206,8 +294,8 @@ function renderLearn() {
         <img src="${word.img}" class="word-image" alt="${word.word}">
         <div class="word-text" onclick="spellOut('${word.word}')">${word.word}</div>
         <div class="nav-buttons">
-            <button class="nav-btn btn-back" onclick="prevLearn()">⬅️ BACK</button>
-            <button class="nav-btn btn-next" onclick="nextLearn()">NEXT ➡️</button>
+            <button class="nav-btn btn-back" onclick="AudioSys.click(); prevLearn()">⬅️ BACK</button>
+            <button class="nav-btn btn-next" onclick="AudioSys.click(); nextLearn()">NEXT ➡️</button>
         </div>
     `;
 }
@@ -269,8 +357,8 @@ function renderSpell() {
         <div class="spell-slots">${slotsHTML}</div>
         <div class="letter-pool">${poolHTML}</div>
         <div class="nav-buttons">
-            <button class="nav-btn btn-back" onclick="prevSpell()">⬅️ BACK</button>
-            <button class="nav-btn" style="background: #ff9f43; color: white;" onclick="handleBackspace()">⌫ DELETE</button>
+            <button class="nav-btn btn-back" onclick="AudioSys.click(); prevSpell()">⬅️ BACK</button>
+            <button class="nav-btn" style="background: #ff9f43; color: white;" onclick="AudioSys.click(); handleBackspace()">⌫ DELETE</button>
         </div>
     `;
 }
@@ -286,6 +374,7 @@ function handleLetterClick(letter, btn) {
             slot.classList.add('has-letter');
             spellInput += letter;
             
+            AudioSys.click();
             btn.style.transform = 'scale(0.9)';
             setTimeout(() => btn.style.transform = 'scale(1)', 100);
             
@@ -315,14 +404,20 @@ function checkSpelling() {
     slots.forEach(slot => spelledWord += slot.textContent);
     
     if (spelledWord === cleanWord) {
+        // SUCCESS!
+        AudioSys.success();
+        celebrate();
         speak('Great job! ' + currentSpellWord);
         saveWordProgress(currentSpellWord);
+        
         document.querySelector('.spell-slots').style.animation = 'bounce 0.5s';
         setTimeout(() => {
             spellIndex++;
             renderSpell();
         }, 1500);
     } else {
+        // WRONG
+        AudioSys.wrong();
         speak('Try again');
         document.querySelector('.spell-slots').style.animation = 'shake 0.5s';
         setTimeout(() => {
@@ -357,7 +452,6 @@ function renderMatch() {
     matchIndex = ((matchIndex % words.length) + words.length) % words.length;
     const correctWord = words[matchIndex];
     
-    // Get 2 random wrong answers
     const otherWords = words
         .filter(w => w.word !== correctWord.word)
         .sort(() => 0.5 - Math.random())
@@ -367,7 +461,7 @@ function renderMatch() {
     
     let buttonsHTML = '';
     options.forEach(opt => {
-        buttonsHTML += `<button class="match-btn" onclick="checkMatch('${opt.word}', '${correctWord.word}')">${opt.word}</button>`;
+        buttonsHTML += `<button class="match-btn" onclick="checkMatch('${opt.word}', '${correctWord.word}', this)">${opt.word}</button>`;
     });
     
     container.innerHTML = `
@@ -375,26 +469,32 @@ function renderMatch() {
         <img src="${correctWord.img}" class="word-image" alt="What is this?">
         <div style="width: 100%; max-width: 400px;">${buttonsHTML}</div>
         <div class="nav-buttons">
-            <button class="nav-btn btn-back" onclick="prevMatch()">⬅️ BACK</button>
-            <button class="nav-btn btn-next" onclick="nextMatch()">SKIP ➡️</button>
+            <button class="nav-btn btn-back" onclick="AudioSys.click(); prevMatch()">⬅️ BACK</button>
+            <button class="nav-btn btn-next" onclick="AudioSys.click(); nextMatch()">SKIP ➡️</button>
         </div>
     `;
 }
 
-function checkMatch(selected, correct) {
+function checkMatch(selected, correct, btn) {
     if (selected === correct) {
+        // SUCCESS!
+        AudioSys.correct();
+        celebrate();
         speak('Great job! ' + correct);
         saveWordProgress(correct);
-        const btn = event.target;
+        
         btn.style.background = '#2ecc71';
         btn.style.color = 'white';
+        btn.style.transform = 'scale(1.05)';
+        
         setTimeout(() => {
             matchIndex++;
             renderMatch();
         }, 1000);
     } else {
+        // WRONG
+        AudioSys.wrong();
         speak('Try again');
-        const btn = event.target;
         btn.style.animation = 'shake 0.5s';
         btn.style.borderColor = '#FF6B6B';
     }
@@ -430,7 +530,6 @@ function renderChallenge() {
         return;
     }
     
-    // Reset challenge
     challengeTimeLeft = getChallengeTimer();
     challengeScore = 0;
     challengeCorrect = 0;
@@ -456,6 +555,7 @@ function renderChallenge() {
         <div id="challenge-area"></div>
     `;
     
+    AudioSys.challengeStart();
     startChallengeTimer();
     nextChallengeTask();
 }
@@ -477,6 +577,7 @@ function startChallengeTimer() {
             endChallenge();
         } else if (challengeTimeLeft <= 10) {
             document.getElementById('ch-time').style.color = '#FF6B6B';
+            if (challengeTimeLeft <= 5) AudioSys.click(); // Countdown beeps
         }
     }, 1000);
 }
@@ -490,13 +591,11 @@ function nextChallengeTask() {
     const words = getWordList().filter(w => w.active);
     const area = document.getElementById('challenge-area');
     
-    // Alternate between match and spell
     challengeTaskType = challengeTaskType === 'match' ? 'spell' : 'match';
     challengeCurrentWord = words[Math.floor(Math.random() * words.length)];
     const cleanWord = challengeCurrentWord.word.replace(/\s/g, '');
     
     if (challengeTaskType === 'match') {
-        // Match task
         const otherWords = words
             .filter(w => w.word !== challengeCurrentWord.word)
             .sort(() => 0.5 - Math.random())
@@ -505,7 +604,7 @@ function nextChallengeTask() {
         
         let buttonsHTML = '';
         options.forEach(opt => {
-            buttonsHTML += `<button class="match-btn" onclick="handleChallengeMatch('${opt.word}')">${opt.word}</button>`;
+            buttonsHTML += `<button class="match-btn" onclick="handleChallengeMatch('${opt.word}', this)">${opt.word}</button>`;
         });
         
         area.innerHTML = `
@@ -514,7 +613,6 @@ function nextChallengeTask() {
             <div style="width: 100%; max-width: 400px;">${buttonsHTML}</div>
         `;
     } else {
-        // Spell task
         let slotsHTML = '';
         for (let i = 0; i < cleanWord.length; i++) {
             slotsHTML += `<div class="spell-slot empty" id="ch-slot-${i}"></div>`;
@@ -537,18 +635,26 @@ function nextChallengeTask() {
 
 let challengeSpellInput = '';
 
-function handleChallengeMatch(selected) {
+function handleChallengeMatch(selected, btn) {
     if (selected === challengeCurrentWord.word) {
         challengeScore += 10;
         challengeCorrect++;
+        AudioSys.correct();
+        celebrate({ particleCount: 50 });
         speak('Great!');
+        
+        btn.style.background = '#2ecc71';
+        btn.style.color = 'white';
+        
         setTimeout(nextChallengeTask, 400);
     } else {
+        AudioSys.wrong();
         speak('Try again');
         challengeWrong++;
         if (!challengePracticeWords.includes(challengeCurrentWord.word)) {
             challengePracticeWords.push(challengeCurrentWord.word);
         }
+        btn.style.animation = 'shake 0.5s';
     }
     updateChallengeHUD();
 }
@@ -561,14 +667,18 @@ function handleChallengeLetter(letter) {
         slot.textContent = letter;
         slot.classList.add('has-letter');
         challengeSpellInput += letter;
+        AudioSys.click();
         
         if (challengeSpellInput === cleanWord) {
             challengeScore += 20;
             challengeCorrect++;
+            AudioSys.correct();
+            celebrate({ particleCount: 80 });
             speak('Excellent!');
             challengeSpellInput = '';
             setTimeout(nextChallengeTask, 400);
         } else if (challengeSpellInput.length === cleanWord.length) {
+            AudioSys.wrong();
             speak('Try again');
             challengeWrong++;
             if (!challengePracticeWords.includes(challengeCurrentWord.word)) {
@@ -591,13 +701,17 @@ function endChallenge() {
     clearInterval(challengeTimer);
     challengeTimer = null;
     
-    // Save high score
     const currentHigh = getHighScore();
     if (challengeScore > currentHigh) {
         setStorage('ss_ch_high', challengeScore);
     }
     
-    // Show results
+    // Big celebration for good scores
+    if (challengeScore >= 50) {
+        bigCelebration();
+        AudioSys.success();
+    }
+    
     document.getElementById('res-score').textContent = challengeScore;
     document.getElementById('res-correct').textContent = challengeCorrect;
     document.getElementById('res-wrong').textContent = challengeWrong;
@@ -643,7 +757,7 @@ function renderAdmin() {
         <div class="admin-section">
             <h3>Student Name</h3>
             <input type="text" class="admin-input" id="admin-name" value="${getUserName()}" placeholder="Enter name">
-            <button class="home-btn" onclick="saveName()" style="width: 100%; margin-top: 10px;">Save Name</button>
+            <button class="home-btn" onclick="AudioSys.click(); saveName()" style="width: 100%; margin-top: 10px;">Save Name</button>
         </div>
         
         <div class="admin-section">
@@ -668,7 +782,7 @@ function renderAdmin() {
             <h3>Add New Word</h3>
             <input type="text" class="admin-input" id="new-word" placeholder="Word (e.g., apple)">
             <input type="text" class="admin-input" id="new-img" placeholder="Image URL">
-            <button class="home-btn" onclick="addWord()" style="width: 100%; margin-top: 10px;">Add Word</button>
+            <button class="home-btn" onclick="AudioSys.click(); addWord()" style="width: 100%; margin-top: 10px;">Add Word</button>
         </div>
         
         <div class="admin-section">
@@ -680,10 +794,10 @@ function renderAdmin() {
             <h3>Progress</h3>
             <p>Total Stars: 🌟 ${getTotalStars()}</p>
             <p>Challenge High Score: ${getHighScore()}</p>
-            <button class="danger-btn" onclick="resetAll()">⚠️ RESET ALL PROGRESS</button>
+            <button class="danger-btn" onclick="AudioSys.click(); resetAll()">⚠️ RESET ALL PROGRESS</button>
         </div>
         
-        <button class="home-btn" onclick="showScreen('home')" style="margin-top: 20px;">Back to Home</button>
+        <button class="home-btn" onclick="AudioSys.click(); showScreen('home')" style="margin-top: 20px;">Back to Home</button>
     `;
 }
 
@@ -691,6 +805,7 @@ function saveName() {
     const name = document.getElementById('admin-name').value.trim();
     if (name) {
         setStorage('ss_username', name);
+        AudioSys.correct();
         alert('Name saved!');
     }
 }
@@ -717,17 +832,20 @@ function addWord() {
     const img = document.getElementById('new-img').value.trim();
     
     if (!word || !img) {
+        AudioSys.wrong();
         alert('Please enter both word and image URL');
         return;
     }
     
     if (!/^[a-z\s]+$/.test(word)) {
+        AudioSys.wrong();
         alert('Word must contain only letters');
         return;
     }
     
     const list = getWordList();
     if (list.find(w => w.word === word)) {
+        AudioSys.wrong();
         alert('Word already exists!');
         return;
     }
@@ -738,6 +856,8 @@ function addWord() {
     document.getElementById('new-word').value = '';
     document.getElementById('new-img').value = '';
     
+    AudioSys.success();
+    celebrate();
     renderAdmin();
     alert('Word added!');
 }
@@ -748,6 +868,7 @@ function resetAll() {
         setStorage('engTotalStars', '0');
         setStorage('ss_ch_high', '0');
         setStorage('ss_username', 'Student');
+        AudioSys.wrong();
         alert('All progress reset!');
         renderAdmin();
     }
@@ -762,7 +883,7 @@ function renderLibrary() {
     
     words.forEach(w => {
         html += `
-            <div class="library-item" onclick="speak('${w.word}')">
+            <div class="library-item" onclick="AudioSys.click(); speak('${w.word}')">
                 <span>${w.word}</span>
                 <span>🌟 ${w.count}</span>
             </div>
