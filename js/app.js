@@ -214,14 +214,14 @@ function speak(text) {
 
 async function spellOut(word) {
     speak(word);
-    await delay(1000);
+    await delay(800);
     for (let char of word) {
         if (char !== ' ') {
             speak(char);
-            await delay(400);
+            await delay(500);
         }
     }
-    await delay(300);
+    await delay(400);
     speak(word);
 }
 
