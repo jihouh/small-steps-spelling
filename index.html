@@ -88,4 +88,612 @@
         }
         
         .password-card input {
-            width: 100
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            letter-spacing: 10px;
+        }
+        
+        .password-card button {
+            padding: 12px 30px;
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .password-error {
+            color: #FF6B6B;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Main container */
+        .main-container {
+            flex: 1;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            padding-bottom: 120px;
+            margin: 0 auto;
+        }
+        
+        /* Screens */
+        .screen {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        /* Quote card */
+        .quote-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px dashed #4ECDC4;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 400px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .quote-card p {
+            color: #555;
+            font-size: 18px;
+            margin: 0;
+        }
+        
+        .quote-card small {
+            color: #aaa;
+        }
+        
+        .stars-display {
+            color: #45aaf2;
+            font-size: 20px;
+            margin: 10px;
+        }
+        
+        /* Button grid */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover { transform: scale(1.05); }
+        .btn-learn { background: #4ECDC4; }
+        .btn-spell { background: #45aaf2; }
+        .btn-match { background: #a55eea; }
+        .btn-challenge { background: #eb4d4b; }
+        .btn-library { background: #FF6B6B; }
+        .btn-admin { background: #666; }
+        
+        /* Learn screen */
+        .word-image {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 20px;
+            border: 5px solid #4ECDC4;
+            background: white;
+            margin: 20px 0;
+        }
+        
+        .word-text {
+            font-size: 48px;
+            color: #FF6B6B;
+            font-weight: bold;
+            margin: 20px;
+            cursor: pointer;
+            text-transform: lowercase;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-back { background: #FFE66D; }
+        .btn-next { background: #4ECDC4; color: white; }
+        
+        /* Spell mode */
+        .spell-slots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .spell-slot {
+            width: 50px;
+            height: 60px;
+            border-bottom: 4px solid #4ECDC4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #FF6B6B;
+            background: white;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .spell-slot.filled {
+            color: #aaa;
+            border-bottom-color: #ddd;
+            background: #f5f5f5;
+        }
+        
+        .spell-slot.has-letter {
+            background: #e8f8f5;
+            border-bottom-color: #2ecc71;
+        }
+        
+        .letter-pool {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            max-width: 400px;
+        }
+        
+        .letter-btn {
+            width: 55px;
+            height: 55px;
+            background: #45aaf2;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+        
+        .letter-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #2980b9;
+        }
+        
+        /* Match mode */
+        .match-btn {
+            width: 100%;
+            max-width: 350px;
+            background: white;
+            font-size: 22px;
+            padding: 15px;
+            border-radius: 18px;
+            border: 3px solid #FFE66D;
+            box-shadow: 0 5px 0 #FFE66D;
+            margin: 10px 0;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: lowercase;
+        }
+        
+        .match-btn:hover {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #FFE66D;
+        }
+        
+        /* Challenge mode */
+        .challenge-hud {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 20px;
+            border: 3px solid #eb4d4b;
+            margin-bottom: 20px;
+            max-width: 400px;
+        }
+        
+        .hud-item {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .hud-label {
+            font-size: 12px;
+            color: #888;
+            display: block;
+        }
+        
+        .hud-value {
+            font-size: 24px;
+            color: #eb4d4b;
+            font-weight: bold;
+        }
+        
+        .challenge-instruction {
+            font-size: 20px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        
+        /* Library mode - NEW */
+        .library-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+        }
+        
+        .library-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .library-card.unlocked {
+            border-color: #4ECDC4;
+            box-shadow: 0 4px 8px rgba(78, 205, 196, 0.2);
+        }
+        
+        .library-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        .library-card img.grey {
+            filter: grayscale(100%) opacity(0.5);
+        }
+        
+        .library-card span {
+            display: block;
+            font-size: 18px;
+            text-transform: lowercase;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .library-card .stars {
+            color: #f1c40f;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        /* Admin mode */
+        .admin-section {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            text-align: left;
+        }
+        
+        .admin-section h3 {
+            color: #555;
+            margin-bottom: 15px;
+        }
+        
+        .admin-input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .word-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .word-item-admin {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .word-item-admin img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .word-item-admin label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        
+        .word-item-admin .delete-btn {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 24px;
+            cursor: pointer;
+        }
+        
+        .toggle-switch.active {
+            background: #4ECDC4;
+        }
+        
+        .danger-btn {
+            background: #ff9f43;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        /* Results overlay */
+        .results-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .results-card {
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 18px;
+        }
+        
+        .practice-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .practice-tag {
+            background: #ffebee;
+            color: #FF6B6B;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        
+        /* Navigation bar - UPDATED */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0 25px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .nav-item {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 10px;
+            color: #888;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Klee One', cursive;
+            min-width: 60px;
+        }
+        
+        .nav-item .icon {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item.active {
+            color: #FF6B6B;
+        }
+        
+        /* Utilities */
+        .coming-soon {
+            color: #555;
+            font-size: 20px;
+            margin: 40px 0;
+        }
+        
+        .home-btn {
+            padding: 15px 30px;
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Modal -->
+    <div id="password-modal" class="password-modal">
+        <div class="password-card">
+            <h3>🔒 Enter Parent Password</h3>
+            <input type="password" id="password-input" maxlength="4" placeholder="****">
+            <button onclick="checkPassword()">Unlock</button>
+            <p id="password-error" class="password-error">Wrong password! Try again.</p>
+            <button onclick="closePasswordModal()" style="background: #999; margin-top: 10px;">Cancel</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>Small Steps Spelling ✨</h1>
+        <div class="header-icons">
+            <button class="icon-btn" onclick="showPasswordModal()" title="Parent Settings">⚙️</button>
+            <button class="icon-btn" onclick="toggleFullscreen()" title="Fullscreen">🖥️</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div id="home" class="screen active"></div>
+        <div id="learn" class="screen"></div>
+        <div id="spell" class="screen"></div>
+        <div id="match" class="screen"></div>
+        <div id="challenge" class="screen"></div>
+        <div id="library" class="screen"></div>
+        <div id="admin" class="screen"></div>
+    </div>
+
+    <!-- Results Overlay -->
+    <div id="results-overlay" class="results-overlay" onclick="if(event.target===this)closeResults()">
+        <div class="results-card">
+            <h2 style="color: #45aaf2; margin-bottom: 20px;">Time's Up! 🏁</h2>
+            <div class="stat-row"><span>Final Score:</span><strong id="res-score" style="color: #eb4d4b;">0</strong></div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 10px 0;">
+            <div class="stat-row"><span>✅ Correct:</span><strong id="res-correct" style="color: #2ecc71;">0</strong></div>
+            <div class="stat-row"><span>❌ Wrong:</span><strong id="res-wrong" style="color: #FF6B6B;">0</strong></div>
+            <h3 style="margin: 20px 0 10px; color: #555;">Practice These:</h3>
+            <div id="res-practice" class="practice-tags"></div>
+            <button class="home-btn" onclick="closeResults()" style="margin-top: 20px;">BACK TO HOME</button>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="showScreen('home')">
+            <span class="icon">🏠</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('learn')">
+            <span class="icon">📖</span>
+            <span>Learn</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('spell')">
+            <span class="icon">✏️</span>
+            <span>Spell</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('match')">
+            <span class="icon">🧩</span>
+            <span>Match</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('challenge')">
+            <span class="icon">🔥</span>
+            <span>Chall.</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('library')">
+            <span class="icon">📚</span>
+            <span>Lib</span>
+        </button>
+    </nav>
+
+    <script src="./js/app.js"></script>
+</body>
+</html>
