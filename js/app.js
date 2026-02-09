@@ -232,17 +232,17 @@ async function spellOut(word) {
     
     // Full word
     await speakAndWait(cleanWord);
-    await delay(800);
+    await delay(500);
     
     // Each letter with proper wait
     for (let char of cleanWord) {
         if (char !== ' ') {
             await speakAndWait(char);
-            await delay(450);
+            await delay(300);
         }
     }
     
-    await delay(350);
+    await delay(200);
     await speakAndWait(cleanWord);
 }
 
@@ -996,5 +996,6 @@ function resetAll() {
 document.addEventListener('DOMContentLoaded', function() {
     showScreen('home');
 });
+
 
 
